@@ -34,14 +34,31 @@ int32_t read_air_pressure() {
     delayMicroseconds(1);
   }
 
-  digitalWrite(pressure_ctrl, HIGH);
-  delayMicroseconds(1);
+  // This should put us in 40 Hz sampling
+  uint8_t control_cycles[] = {HIGH, LOW, HIGH, LOW, HIGH};
+  for (const auto value : control_cycles) {
+    digitalWrite(pressure_ctrl, value);
+    delayMicroseconds(1);
+  }
 
   return air_pressure;
 }
 
 void loop() {
-  int32_t pressure = read_air_pressure();
-  Serial.println(pressure);
-  delayMicroseconds(1000);
+  const int NUM_MEASUREMENTS = 33;
+  int32_t max_pressure = 0;
+  const auto start = millis();
+  for (int _ = 0; _ < NUM_MEASUREMENTS; ++_) {
+    int32_t pressure = read_air_pressure();
+    if (pressure > max_pressure) {
+      max_pressure = pressure;
+    }
+  }
+  Serial.print("max_pressure: ");
+  Serial.print(max_pressure);
+  Serial.print(" from ");
+  Serial.print(NUM_MEASUREMENTS);
+  Serial.print(" measurments in ");
+  Serial.print(millis() - start);
+  Serial.println(" milliseconds");
 }
